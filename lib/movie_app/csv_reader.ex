@@ -22,8 +22,7 @@ defmodule MovieApp.CSVReader do
   end
 
   def to_keyword_list([headers | rows]) do
-    atom_headers = Enum.map(headers, fn x -> String.to_atom(x) end)
-    Enum.map(rows, fn row -> Enum.zip(atom_headers, row) end)
+    Enum.map(rows, fn row -> Enum.zip(headers, row) |> Enum.into(%{}) end)
   end
 end
 
