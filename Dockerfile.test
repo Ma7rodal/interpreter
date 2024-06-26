@@ -1,24 +1,16 @@
-# Dockerfile.test
 FROM elixir:1.17.0 AS test
 
-# Instala hex y rebar
 RUN mix local.hex --force && \
     mix local.rebar --force
 
-# Configura el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos de mix
 COPY mix.exs mix.lock ./
 
-# Instala las dependencias (incluyendo las de desarrollo y de test)
 RUN mix do deps.get, deps.compile
 
-# Copia el resto del código de la aplicación
 COPY . .
 
-# Cambia al entorno de test
 ENV MIX_ENV=test
 
-# Ejecuta los tests
 CMD ["mix", "test"]
