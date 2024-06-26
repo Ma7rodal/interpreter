@@ -2,17 +2,9 @@ defmodule MovieApp do
   @moduledoc """
   Documentation for `MovieApp`.
   """
+  alias MovieApp.{Main}
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> MovieApp.hello()
-      :world
-
-  """
-  def hello do
-    :world
+  def run(query)  do
+    Main.call(query)
   end
 end

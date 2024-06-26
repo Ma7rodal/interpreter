@@ -3,55 +3,24 @@ defmodule MovieApp.Operations do
   Provides operations for counting and sorting movie data.
   """
 
-  @director_name_cols ~w(director_facebook_likes)
-  @actor_1_name_cols ~w(actor_1_facebook_likes)
-  @actor_2_name_cols ~w(actor_2_facebook_likes)
-  @actor_3_name_cols ~w(actor_3_facebook_likes)
-  @movie_title_cols [
-    "actor_1_facebook_likes",
-    "actor_2_facebook_likes",
-    "actor_3_facebook_likes",
-    "budget",
-    "cast_total_facebook_likes",
-    "director_facebook_likes",
-    "duration",
-    "facenumber_in_poster",
-    "gross",
-    "imdb_score",
-    "movie_facebook_likes",
-    "num_critic_for_reviews",
-    "num_user_for_reviews",
-    "num_voted_users",
-    "title_year"]
-
-  @countable_cols [
-    "actor_1_name",
-    "actor_2_name",
-    "actor_3_name",
-    "aspect_ratio",
-    "color",
-    "content_rating",
-    "country",
-    "director_name",
-    "language",
-    "title_year",
-    "movie_title"]
-
   @doc """
   Counts occurrences of values in a specified column.
 
   ## Examples
 
-      iex> data = [%{"director_name" => "Director A"}, %{"director_name" => "Director B"}]
-      iex> MovieApp.Operations.count_column(data, "director_name")
-      %{"Director A" => 1, "Director B" => 1}
+      iex> data = MovieApp.CSVReader.read_file("movies.csv")
+      iex> MovieApp.Operations.count_column(data, "aspect_ratio", :asc, 2)
+      [{1, ["2.24", "1.89", "1.77", "1.44", "1.2", "1.18"]}, {2, ["2.55", "1.5"]}]
 
   """
-  def count_column(data, column) do
+  def count_column(data, column, order, count) do
     data
     |> Enum.map(&Map.get(&1, column))
     |> Enum.frequencies
     |> Map.delete("")
+    |> swap_keys
+    |> sortable(order)
+    |> limit(count)
   end
 
   @doc """
@@ -59,15 +28,16 @@ defmodule MovieApp.Operations do
 
   ## Examples
 
-      iex> data = [%{"budget" => 100}, %{"budget" => 200}]
-      iex> MovieApp.Operations.sort_by(data, "budget", :asc)
-      [%{"budget" => 100}, %{"budget" => 200}]
+      iex> data = MovieApp.CSVReader.read_file("movies.csv")
+      iex> MovieApp.Operations.sort_column_by(data, "movie_title", "budget", :desc, 3)
+      [{"The Host", "12215500000"}, {"Lady Vengeance", "4200000000"}, {"Fateless", "2500000000"}]
 
   """
-  def sort_column_by(data, column, order, limit) do
+  def sort_column_by(data, sortable_col, column, order, limit) do
     Enum.filter(data, fn x -> Map.get(x, column) != "" end)
     |> Enum.sort_by(&Map.get(&1,column) |> convert_to_int, order)
-    |> Enum.map(fn x -> {Map.get(x, "movie_title"), Map.get(x, column)} end)
+    |> Enum.map(fn x ->  {Map.get(x, sortable_col), Map.get(x, column)} end)
+    |> Enum.uniq
     |> Enum.take(limit)
   end
 
@@ -85,20 +55,17 @@ defmodule MovieApp.Operations do
     Enum.take(data, count)
   end
 
-  @doc """
-  Validates if the column is countable.
+  def swap_keys(data) do
+    Enum.reduce(data, %{}, fn {key, value}, acc ->
+      Map.update(acc, value, [key], fn x -> [key | x] end)
+    end)
+  end
 
-  ## Examples
-
-      iex> MovieApp.Operations.valid_countable_column?("director_name")
-      true
-
-      iex> MovieApp.Operations.valid_countable_column?("budget")
-      false
-
-  """
-  def valid_countable_column?(column) do
-    column in @countable_cols
+  def sortable(data, order \\ :desc) do
+    case order do
+      :desc -> Enum.sort(data, fn {k1, _}, {k2, _} -> k1 >= k2 end)
+      :asc -> Enum.sort(data)
+    end
   end
 
   defp convert_to_int(value) do
