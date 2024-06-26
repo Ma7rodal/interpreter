@@ -62,7 +62,7 @@ Run
 ```bash
 $ docker run --rm -it movie_app
 ```
-Now you can execute [queries]{#select}
+Now you can execute [queries](#select)
 ```
 Interactive Elixir (1.17.0) - press Ctrl+C to exit (type h() ENTER for help)
 iex(1)> query = "count title_year limit 3"
