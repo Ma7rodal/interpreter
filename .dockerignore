@@ -1,0 +1,5 @@
+_build
+deps
+*.exs~
+*.ex~
+*.swp
